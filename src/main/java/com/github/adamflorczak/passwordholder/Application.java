@@ -1,10 +1,16 @@
 package com.github.adamflorczak.passwordholder;
 
+import com.github.adamflorczak.passwordholder.businesslogic.FileSafeController;
+import com.github.adamflorczak.passwordholder.model.PasswordEntry;
 import com.github.adamflorczak.passwordholder.model.PasswordSafe;
+import com.google.gson.Gson;
+import org.apache.commons.io.FileUtils;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,12 +20,19 @@ public class Application {
 
         PasswordSafe passwordSafe = new PasswordSafe();
 
-        passwordSafe.addEntries("facebook","adam", "bomba");
-        passwordSafe.addEntries("roksa.pl","mateusz", "twardy");
 
-        passwordSafe.printMap();
+        passwordSafe.addEntries(1, "facebook", "adam", "bomba");
+        passwordSafe.addEntries(2, "google", "mateusz", "twardy");
 
-   //     PasswordSafe.copyingPasswordToTheClipboard(passwordSafe.getPassword("facebook"));
+
+        FileSafeController fileSafeController = new FileSafeController(passwordSafe);
+
+        fileSafeController.saveToFilePro("tajneprzezpoufne.xxx");
+
+
+        //    PasswordSafe.copyingPasswordToTheClipboard(passwordSafe.getPassword("facebook"));
+
+        fileSafeController.readFromFilePrint("tajneprzezpoufne.xxx");
 
     }
 

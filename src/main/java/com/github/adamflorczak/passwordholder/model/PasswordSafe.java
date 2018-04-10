@@ -3,7 +3,7 @@ package com.github.adamflorczak.passwordholder.model;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -12,7 +12,7 @@ public class PasswordSafe {
 
 
 
-    public Map<Integer, PasswordEntry> entries = new HashMap<>();
+    private Map<Integer, PasswordEntry> entries = new HashMap<>();
     private PasswordEntry pe = new PasswordEntry();
 
 
@@ -24,22 +24,32 @@ public class PasswordSafe {
                 .getPassword();
     }
 
-    public void addEntries(String serviceName, String login, String password){
+    public void addEntries(Integer id, String serviceName, String login, String password){
 
-        char[] passworded = password.toCharArray();
+        if(entries.containsKey(id)){
+            throw new RuntimeException("This id is already in the system. Choose different one");
+        }
 
-
-        Integer id = PasswordEntry.getAllIds();
-        PasswordEntry pe = new PasswordEntry(serviceName, login, passworded);
+        PasswordEntry pe = new PasswordEntry(id, serviceName, login, password);
         entries.put(id, pe);
         System.out.println("Potwierdzam - dodano");
-        pe.setAllIds();
 
     }
 
     public void removeEntries(Integer id){
 
+        if(!entries.containsKey(id)){
+            throw new RuntimeException("This id is not in the system. Choose different one");
+        }
+
         entries.remove(id);
+    }
+
+    public PasswordEntry getValueFromMap(Integer id){
+
+        PasswordEntry object = entries.get(id);
+
+        return object;
     }
 
     public void printMap(){
@@ -47,6 +57,11 @@ public class PasswordSafe {
         for (Map.Entry<Integer, PasswordEntry> passwords : entries.entrySet()){
             System.out.println(passwords.getValue());
         }
+    }
+
+    public Collection<PasswordEntry> getUserData() {
+
+        return entries.values();
     }
 
     @Override
@@ -63,18 +78,6 @@ public class PasswordSafe {
 
         return Objects.hash(entries, pe);
     }
-
-    //    public void printRegister() {
-//        for (Map.Entry<Client, HashSet<Book>> position : libraryRegister.entrySet()) {
-//            System.out.println(position.getKey() + " Ma wypożyczone:  ");
-//            for (Book books : position.getValue()) {
-//                System.out.println(books.getBookName() + " napisane przez " +books.getAuthor() + " ");
-//            }
-//            System.out.println();
-//        }
-//    }
-
-
 
     private static String convertCharsArrayToString(char[] password){
 

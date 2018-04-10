@@ -5,20 +5,20 @@ import java.util.Arrays;
 
 public class PasswordEntry {
 
-    private int id;
-
+    private Integer id;
     private String serviceName;
     private String login;
     private char[] password;
-    private static int allIds = 1;
 
     public PasswordEntry() {
     }
 
-    public PasswordEntry(String serviceName, String login, char[] password) {
+    public PasswordEntry(Integer id, String serviceName, String login, String password) {
+
+        this.id = id;
         this.serviceName = serviceName;
         this.login = login;
-        this.password = password;
+        this.password = password.toCharArray();
     }
 
     public int getId() {
@@ -41,13 +41,6 @@ public class PasswordEntry {
         this.id = id;
     }
 
-    public static int getAllIds() {
-        return allIds;
-    }
-
-    public void setAllIds() {
-        this.allIds++;
-    }
 
     @Override
     public String toString() {
