@@ -1,67 +1,103 @@
 package com.github.adamflorczak.passwordholder.model;
 
-import java.awt.*;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.StringSelection;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+
+import com.github.adamflorczak.passwordholder.businesslogic.WrongUserAndServiceException;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class PasswordSafe {
 
+    private Integer allIds = 1;
 
-
-    private Map<Integer, PasswordEntry> entries = new HashMap<>();
+    private Map<String, ArrayList<PasswordEntry>> entries = new HashMap<>();
     private PasswordEntry pe = new PasswordEntry();
 
 
-    public char[] getPassword(final String serviceName) {
+    public char[] getPassword(final String serviceName, final String login) {
         return entries.values().stream()
-                .filter(pe -> pe.getServiceName().equals(serviceName))
-                .findFirst()
-                .orElseThrow(RuntimeException::new)
-                .getPassword();
+                .filter(pe -> pe.listIterator()
+                        .next()
+                        .getServiceName().equals(serviceName)
+                        && pe.listIterator().next().getLogin()
+                        .equals(login)).findFirst()
+                        .orElseThrow(RuntimeException::new)
+                        .listIterator()
+                        .next()
+                       .getPassword();
     }
 
-    public void addEntries(Integer id, String serviceName, String login, String password){
 
-        if(entries.containsKey(id)){
-            throw new RuntimeException("This id is already in the system. Choose different one");
+
+    public void addEntries(Integer id, String serviceName, String login, String password) {
+        if (exists(serviceName, login)) {
+            throw new WrongUserAndServiceException(login + " user in " + serviceName + " already exist. Try another one.");
         }
+        PasswordEntry pe = PasswordEntry.Builder.create().withId(id)
+                                                         .withService(serviceName)
+                                                         .withLogin(login)
+                                                         .withPassword(password)
+                                                         .build();
 
-        PasswordEntry pe = new PasswordEntry(id, serviceName, login, password);
-        entries.put(id, pe);
-        System.out.println("Potwierdzam - dodano");
-
-    }
-
-    public void removeEntries(Integer id){
-
-        if(!entries.containsKey(id)){
-            throw new RuntimeException("This id is not in the system. Choose different one");
+        if (!entries.containsKey(serviceName.toLowerCase())) {
+            entries.put(serviceName.toLowerCase(), new ArrayList<PasswordEntry>());
         }
-
-        entries.remove(id);
+        entries.get(serviceName.toLowerCase()).add(pe);
+        System.out.println("User added to the Password Holder");
     }
 
-    public PasswordEntry getValueFromMap(Integer id){
-
-        PasswordEntry object = entries.get(id);
-
-        return object;
+    public boolean exists(String serviceName, String login) {
+        if (!entries.containsKey(serviceName.toLowerCase())) {
+            return false;
+        } else {
+            for (PasswordEntry pe : entries.get(serviceName.toLowerCase())) {
+                if (pe.getLogin().equals(login)) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 
-    public void printMap(){
 
-        for (Map.Entry<Integer, PasswordEntry> passwords : entries.entrySet()){
+    public void removeEntries(String serviceName, String login) {
+        boolean isRemoved = false;
+        if (!entries.containsKey(serviceName)) {
+            System.err.println("Not found this service. Try another one.");
+        } else {
+            for (PasswordEntry pe : entries.get(serviceName.toLowerCase())) {
+                if (pe.getLogin().equals(login)) {
+                    entries.get(serviceName).remove(pe);
+                    System.out.println("Removed");
+                    isRemoved = true;
+                }
+            }
+            if(!isRemoved) {
+                System.err.println("Not found this user. ");
+            }
+        }
+    }
+
+//    public PasswordEntry getValueFromMap(String serviceName) {
+//
+//        PasswordEntry object = entries.get(serviceName).;
+//
+//        return object;
+//    }
+
+    public void printMap() {
+
+        for (Map.Entry<String, ArrayList<PasswordEntry>> passwords : entries.entrySet()) {
             System.out.println(passwords.getValue());
         }
     }
 
     public Collection<PasswordEntry> getUserData() {
 
-        return entries.values();
+        return entries.values()
+                .stream()
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -79,7 +115,9 @@ public class PasswordSafe {
         return Objects.hash(entries, pe);
     }
 
-    private static String convertCharsArrayToString(char[] password){
+    public String convertCharsArrayToString(char[] password) {
+
+        String pass = new String(password);
 
         StringBuilder sb = new StringBuilder();
 
@@ -87,16 +125,6 @@ public class PasswordSafe {
             sb.append(password[i]);
         }
         return sb.toString();
-    }
-
-    public static void copyingPasswordToTheClipboard(char[] toConvert) {
-
-        String converted = convertCharsArrayToString(toConvert);
-        StringSelection selection = new StringSelection(converted);
-        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-        clipboard.setContents(selection, selection);
-
-
     }
 
 

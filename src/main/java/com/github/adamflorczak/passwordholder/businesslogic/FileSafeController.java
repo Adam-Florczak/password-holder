@@ -7,6 +7,7 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -56,13 +57,20 @@ public class FileSafeController {
     public void readFromFilePrint (String fileToRead) {
 
         Gson gson = new Gson();
-        PasswordEntry passwordEntry = new PasswordEntry();
+        List<PasswordEntry> collect = new ArrayList<>();
+
         try {
-            List<PasswordEntry> collect = FileUtils.readLines(new File(fileToRead), "UTF-8")
-                    .stream().map(s -> gson.fromJson(s, PasswordEntry.class)).collect(Collectors.toList());
-            System.out.println(collect.size());
+            collect = FileUtils.readLines(new File(fileToRead), "UTF-8")
+                    .stream()
+                    .map(s -> gson.fromJson(s, PasswordEntry.class))
+                    .collect(Collectors.toList());
+          //  System.out.println(collect.size());
         } catch (IOException e) {
             e.printStackTrace();
+        }
+
+        for (PasswordEntry passwordEntries : collect) {
+            System.out.println(passwordEntries);
         }
 
     }
