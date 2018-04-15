@@ -2,16 +2,22 @@ package com.github.adamflorczak.passwordholder.model;
 
 
 import com.github.adamflorczak.passwordholder.businesslogic.WrongUserAndServiceException;
+import org.beryx.textio.TextIO;
+import org.beryx.textio.TextIoFactory;
 
+import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class PasswordSafe {
 
-    private Integer allIds = 1;
+    private static Integer allIds = 1;
 
     private Map<String, ArrayList<PasswordEntry>> entries = new HashMap<>();
     private PasswordEntry pe = new PasswordEntry();
+    private TextIO textIO = TextIoFactory.getTextIO();
 
 
     public char[] getPassword(final String serviceName, final String login) {
@@ -24,16 +30,16 @@ public class PasswordSafe {
                         .orElseThrow(RuntimeException::new)
                         .listIterator()
                         .next()
-                       .getPassword();
+                        .getPassword();
     }
 
 
 
-    public void addEntries(Integer id, String serviceName, String login, String password) {
+    public void addEntries(String serviceName, String login, String password) throws IllegalArgumentException {
         if (exists(serviceName, login)) {
-            throw new WrongUserAndServiceException(login + " user in " + serviceName + " already exist. Try another one.");
+            throw new WrongUserAndServiceException(login + " user in " + serviceName + " already exist. Try another one. \n");
         }
-        PasswordEntry pe = PasswordEntry.Builder.create().withId(id)
+        PasswordEntry pe = PasswordEntry.Builder.create().withId(allIds)
                                                          .withService(serviceName)
                                                          .withLogin(login)
                                                          .withPassword(password)
@@ -43,7 +49,8 @@ public class PasswordSafe {
             entries.put(serviceName.toLowerCase(), new ArrayList<PasswordEntry>());
         }
         entries.get(serviceName.toLowerCase()).add(pe);
-        System.out.println("User added to the Password Holder");
+        textIO.getTextTerminal().println("\nUser added to the Password Holder \n");
+        allIds++;
     }
 
     public boolean exists(String serviceName, String login) {
@@ -60,35 +67,30 @@ public class PasswordSafe {
     }
 
 
-    public void removeEntries(String serviceName, String login) {
+    public void removeEntries(String serviceName, String login)  {
         boolean isRemoved = false;
         if (!entries.containsKey(serviceName)) {
-            System.err.println("Not found this service. Try another one.");
+            textIO.getTextTerminal().println("\nThis service not found. Try another one. \n");
         } else {
-            for (PasswordEntry pe : entries.get(serviceName.toLowerCase())) {
-                if (pe.getLogin().equals(login)) {
-                    entries.get(serviceName).remove(pe);
-                    System.out.println("Removed");
-                    isRemoved = true;
-                }
+
+            entries.values().stream().forEach(v -> v.removeIf(e -> e.getLogin().equals(login)
+                    && e.getServiceName().equals(serviceName)));
+            entries.entrySet().removeIf(e -> e.getValue().isEmpty());
+            textIO.getTextTerminal().println("\nThe user has been succesfully removed \n");
+                   isRemoved = true;
             }
             if(!isRemoved) {
-                System.err.println("Not found this user. ");
+                textIO.getTextTerminal().println("\nThis user was not found. \n");
             }
         }
-    }
 
-//    public PasswordEntry getValueFromMap(String serviceName) {
-//
-//        PasswordEntry object = entries.get(serviceName).;
-//
-//        return object;
-//    }
+
 
     public void printMap() {
 
         for (Map.Entry<String, ArrayList<PasswordEntry>> passwords : entries.entrySet()) {
-            System.out.println(passwords.getValue());
+            String entry = String.valueOf(passwords.getValue() + "\n");
+            textIO.getTextTerminal().println(entry);
         }
     }
 
@@ -115,16 +117,20 @@ public class PasswordSafe {
         return Objects.hash(entries, pe);
     }
 
-    public String convertCharsArrayToString(char[] password) {
+    public void copyPasswordToTheClipboard(String serviceName, String userlogin) {
 
-        String pass = new String(password);
+        String password = new String(getPassword(serviceName, userlogin));
 
-        StringBuilder sb = new StringBuilder();
+        StringSelection selection = new StringSelection(password);
+        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        clipboard.setContents(selection, selection);
+    }
 
-        for (int i = 0; i < password.length; i++) {
-            sb.append(password[i]);
-        }
-        return sb.toString();
+    public void printPassword(String serviceName, String userlogin){
+
+        String password = new String(getPassword(serviceName, userlogin));
+        System.out.println(password);
+
     }
 
 

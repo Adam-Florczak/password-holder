@@ -4,6 +4,8 @@ import com.github.adamflorczak.passwordholder.model.PasswordEntry;
 import com.github.adamflorczak.passwordholder.model.PasswordSafe;
 import com.google.gson.Gson;
 import org.apache.commons.io.FileUtils;
+import org.beryx.textio.TextIO;
+import org.beryx.textio.TextIoFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,6 +16,7 @@ import java.util.stream.Collectors;
 
 public class FileSafeController {
 
+    private TextIO textIO = TextIoFactory.getTextIO();
     PasswordSafe passwordSafe;
 
     public FileSafeController(PasswordSafe passwordSafe) {
@@ -30,12 +33,11 @@ public class FileSafeController {
         try {
             FileUtils.writeStringToFile(file, passwordEntryJson, "UTF-8", true);
         } catch (IOException e) {
-            //File not accessible
             e.printStackTrace();
         }
     }
 
-    public void saveToFilePro (String fileName){
+    public void saveToFilePro (PasswordSafe passwordSafe,File file){
 
         Gson gson = new Gson();
 
@@ -44,9 +46,6 @@ public class FileSafeController {
                 .stream()
                 .map(gson::toJson)
                 .collect(Collectors.toList());
-
-        File file = new File(fileName);
-
         try{
             FileUtils.writeLines(file,gsons);
         }catch(IOException io){
@@ -54,23 +53,23 @@ public class FileSafeController {
         }
     }
 
-    public void readFromFilePrint (String fileToRead) {
+    public void readFromFilePrint (File fileToRead) {
 
         Gson gson = new Gson();
         List<PasswordEntry> collect = new ArrayList<>();
 
         try {
-            collect = FileUtils.readLines(new File(fileToRead), "UTF-8")
+            collect = FileUtils.readLines( fileToRead, "UTF-8")
                     .stream()
                     .map(s -> gson.fromJson(s, PasswordEntry.class))
                     .collect(Collectors.toList());
-          //  System.out.println(collect.size());
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         for (PasswordEntry passwordEntries : collect) {
-            System.out.println(passwordEntries);
+            String password = passwordEntries.toString();
+            textIO.getTextTerminal().println(password);
         }
 
     }
